@@ -1,0 +1,12 @@
+debug/
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+*.idea
+*.iml
