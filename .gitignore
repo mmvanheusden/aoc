@@ -10,3 +10,4 @@ Cargo.lock
 .nfs*
 *.idea
 *.iml
+*input.txt

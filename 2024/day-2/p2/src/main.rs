@@ -4,12 +4,13 @@ fn main() {
 }
 
 fn solve_input(input: &str) -> usize {
-    let mut reports: Vec<Report> = vec![];
+    let mut reports: Vec<Report> = Vec::new();
     for line in input.lines() {
+        Report::from_input(line).is_valid();
         reports.push(Report::from_input(line))
     }
 
-    reports.retain(|r| r.has_valid_steps() && r.is_increasing_or_decreasing());
+    reports.retain(|r| r.is_valid());
     reports.iter().count()
 }
 
@@ -23,12 +24,20 @@ impl Report {
         Report(line.split_whitespace().map(|x| x.parse::<u8>().unwrap()).collect())
     }
 
-    fn is_increasing_or_decreasing(&self) -> bool {
-        check_order(&self.0)
-    }
-
-    fn has_valid_steps(&self) -> bool {
-        valid_steps(&self.0)
+    fn is_valid(&self) -> bool {
+         match (check_order(&self.0), valid_steps(&self.0)) {
+            (true, true) => true,
+             (true, false) => {
+                 for attempt in bruteforce_mutations(&self.0) {
+                     if valid_steps(&attempt) {
+                         // we got a match!
+                         return true
+                     }
+                 }
+                 false
+             }
+            _ => false
+        }
     }
 }
 
@@ -75,4 +84,15 @@ fn valid_steps(array: &Vec<u8>) -> bool {
     }
 
     true
+}
+
+// at this point just bruteforce it :crying:
+fn bruteforce_mutations(array: &Vec<u8>) -> Vec<Vec<u8>> {
+    let mut big_list: Vec<Vec<u8>> = Vec::from(Vec::new());
+    for (i,e) in array.iter().enumerate() {
+        let mut new_list = array.clone();
+        new_list.remove(i);
+        big_list.push(new_list);
+    }
+    big_list
 }
