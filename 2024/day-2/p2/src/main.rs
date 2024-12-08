@@ -1,12 +1,20 @@
+use std::fmt::Debug;
+use std::ops::Sub;
+use std::time::SystemTime;
+
 fn main() {
+    let start = SystemTime::now();
     let input = include_str!("../../input.txt");
+    let duration = SystemTime::now().duration_since(start).unwrap();
     println!("{}", solve_input(input));
+    println!("Took: {:?}", duration);
+
 }
 
 fn solve_input(input: &str) -> usize {
     let reports: Vec<Report> = input.lines().map(Report::from).collect();
 
-    reports.iter().filter(|x| x.is_valid()).count()
+    reports.iter().filter(|&x| x.is_valid()).count()
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -21,65 +29,74 @@ impl From<&str> for Report {
 }
 
 impl Report {
+    fn valid_step(&self) -> bool {
+        if self.0.len() == 1 {
+            return self.0[0].abs_diff(self.0[1]) == 1
+        }
+
+        // println!("{:?} i:{} d:{}",array, array.iter().is_sorted_by(|x, y| (1..4).contains(&(**y as i8 - **x as i8))),array.iter().is_sorted_by(|x, y| (1..4).contains(&(**x as i8 - **y as i8))));
+
+        println!("{:?}", self.0);
+        println!("Diff: {:?}", self.0.iter().zip(self.0.iter().skip(1)).map(|(a, b)| b.abs_diff(*a)).collect::<Vec<_>>());
+
+        self.0 // increasing
+            .iter()
+            .is_sorted_by(|x, y| (1..4).contains(&(**y as i8 - **x as i8)))
+        ||
+        self.0 // decreasing
+            .iter()
+            .is_sorted_by(|x, y| (1..4).contains(&(**x as i8 - **y as i8)))
+    }
+
+
     fn is_valid(&self) -> bool {
-         match (check_order(&self.0), valid_steps(&self.0)) {
-            (true, true) => true,
-             (true, false) => {
-                 for attempt in bruteforce_mutations(&self.0) {
-                     if valid_steps(&attempt) {
-                         // we got a match!
-                         return true
-                     }
-                 }
-                 false
-             }
-            _ => false
-        }
+        // firstly the step must be valid.
+        let step = self.valid_step();
+        if !step {
+            for mutation in bruteforce_mutations(&self.0) {
+                if mutation.valid_step() {
+                    println!("fixed {:?} to {:?}",&self.0, mutation);
+                    return true
+                }
+            }
+        };
+        step
     }
 }
 
-fn check_order(array: &Vec<u8>) -> bool {
-    let mut increasing = true;
-    let mut decreasing = true;
-    if array.len() <= 1 {
-        return true;
-    }
 
-    for i in 1..array.len() {
-        if array[i] < array[i - 1] {
-            increasing = false;
-        }
-
-        if array[i] > array[i - 1] {
-            decreasing = false;
-        }
-    }
-
-    increasing || decreasing
-}
-
-fn valid_steps(array: &Vec<u8>) -> bool {
-    if array.len() == 1 {
-        return array[0].abs_diff(array[1]) == 1
-    }
-
-    for i in 1..array.len() {
-        let eval = (1..4).contains(&array[i].abs_diff(array[i - 1]));
-        if !eval {
-            return false;
-        }
-    }
-
-    true
-}
 
 // at this point just bruteforce it :crying:
-fn bruteforce_mutations(array: &Vec<u8>) -> Vec<Vec<u8>> {
-    let mut big_list: Vec<Vec<u8>> = Vec::from(Vec::new());
-    for (i,e) in array.iter().enumerate() {
+fn bruteforce_mutations(array: &Vec<u8>) -> Vec<Report> {
+    let mut result: Vec<Report> = array.iter().enumerate().map(|(i, _)| {
         let mut new_list = array.clone();
         new_list.remove(i);
-        big_list.push(new_list);
+        Report(new_list)
+    }).collect();
+
+    println!("{:?}", result);
+    result
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example_input() {
+        let input =
+            /*y             n           n       y c           y c         y*/
+            "7 6 4 2 1\n1 2 7 8 9\n9 7 6 2 1\n1 3 2 4 5\n8 6 4 4 1\n1 3 6 7 9";
+        let reports: Vec<Report> = input.lines().map(Report::from).collect();
+
+
+        assert_eq!(true, reports[0].is_valid());
+        assert_eq!(false, reports[1].is_valid());
+        assert_eq!(false, reports[2].is_valid());
+        assert_eq!(true, reports[3].is_valid()); // after correction
+        assert_eq!(true, reports[4].is_valid()); // after correction
+        assert_eq!(true, reports[5].is_valid());
+
     }
-    big_list
 }
