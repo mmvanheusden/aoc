@@ -4,14 +4,9 @@ fn main() {
 }
 
 fn solve_input(input: &str) -> usize {
-    let mut reports: Vec<Report> = Vec::new();
-    for line in input.lines() {
-        Report::from_input(line).is_valid();
-        reports.push(Report::from_input(line))
-    }
+    let reports: Vec<Report> = input.lines().map(Report::from).collect();
 
-    reports.retain(|r| r.is_valid());
-    reports.iter().count()
+    reports.iter().filter(|x| x.is_valid()).count()
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -19,11 +14,13 @@ struct Report(
     Vec<u8>
 );
 
-impl Report {
-    fn from_input(line: &str) -> Report {
-        Report(line.split_whitespace().map(|x| x.parse::<u8>().unwrap()).collect())
+impl From<&str> for Report {
+    fn from(aoc_input_line: &str) -> Report {
+        Report(aoc_input_line.split_whitespace().map(|x| x.parse::<u8>().unwrap()).collect())
     }
+}
 
+impl Report {
     fn is_valid(&self) -> bool {
          match (check_order(&self.0), valid_steps(&self.0)) {
             (true, true) => true,
@@ -39,16 +36,6 @@ impl Report {
             _ => false
         }
     }
-}
-
-
-fn convert_input(input: &str) -> Vec<Vec<u8>> {
-    let mut result = Vec::new();
-    for line in input.lines() {
-        result.push(line.split_whitespace().map(|x| x.parse::<u8>().unwrap()).collect())
-    }
-
-    result
 }
 
 fn check_order(array: &Vec<u8>) -> bool {
