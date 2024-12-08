@@ -6,20 +6,18 @@ fn main() {
     println!("{}", solve_input(input));
 }
 
-fn solve_input(input: &str) -> &str {
+fn solve_input(input: &str) -> u128 {
     // extract all instructions with my awesome expression
-    let ex = Regex::new(r"do\(\)|mul\(\d*,\d*\)|don't\(\)").unwrap();
+    let ex = Regex::new(r"do\(\)|mul\(\d*,\d*\)|don't\(\)").unwrap(); // match do, don't, sum all at once
     let matches: Vec<&str> = ex.find_iter(input).map(|m| m.as_str()).collect();
     let mut instructions: Vec<Multiplication> = vec![];
 
 
-    // println!("{:?}", matches);
+    // let mut stack: VecDeque<bool> = vec![true]; // I was first thinking about a stack but then I figured it can be done simpler with just a mutable bool.
+    let mut enabled = true; // We start enabled.
+    for matsj in matches {
 
-    // let mut stack: VecDeque<bool> = vec![true];
-    let mut enabled = true;
-    for (i,matsj) in matches.iter().enumerate() {
-        println!("{}", i);
-        // We start enabled.
+        // match if we are allowed to multiply, and the type of instruction we got.
         match (enabled,matsj.contains("mul("), matsj.contains("do("), matsj.contains("don't(")) {
             (true,true,_,_) => {
                 // DO!
@@ -32,18 +30,15 @@ fn solve_input(input: &str) -> &str {
                 enabled = false
             }
             _ => {
-                println!("weird!")
+                // an instruction while disabled.
             }
         }
     }
 
-    // println!("{:?}", instructions);
-
 
     let sum: u128 = instructions.iter().map(|m| m.a * m.b).sum();
 
-    println!("{}", sum);
-    "a"
+    sum
 }
 
 #[derive(Debug)]
@@ -54,17 +49,7 @@ struct Multiplication {
 
 impl Multiplication {
     fn from_instruction(instruction: &str) -> Multiplication {
-        let mut iter = instruction.splitn(2, ',');
-        let l = iter.next().unwrap();
-        let r = iter.next().unwrap();
-
-        // println!("{}", l);
-        // println!("{}", r);
-
-        println!("{:?}", Multiplication {
-            a: l[4..].parse::<u128>().unwrap(),
-            b: r[..r.len() - 1].parse::<u128>().unwrap(),
-        });
+        let (l,r) = instruction.split_once(",").unwrap(); // unpack l and r into tuple.
 
         Multiplication {
             a: l[4..].parse::<u128>().unwrap(),
