@@ -8,13 +8,12 @@ fn main() {
     let duration = SystemTime::now().duration_since(start).unwrap();
     println!("{}", solve_input(input));
     println!("Took: {:?}", duration);
-
 }
 
 fn solve_input(input: &str) -> usize {
     let reports: Vec<Report> = input.lines().map(Report::from).collect();
 
-    reports.iter().filter(|&x| x.is_valid()).count()
+    reports.iter().filter(|&x| x.valid()).count()
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -29,52 +28,41 @@ impl From<&str> for Report {
 }
 
 impl Report {
-    fn valid_step(&self) -> bool {
-        if self.0.len() == 1 {
-            return self.0[0].abs_diff(self.0[1]) == 1
+    fn valid(&self) -> bool {
+        fn valid_step_and_order(set: &Vec<u8>) -> bool {
+            if set.len() == 1 {
+                return set[0].abs_diff(set[1]) == 1
+            }
+
+            set // increasing
+                .iter()
+                .is_sorted_by(|x, y| (1..4).contains(&(**y as i8 - **x as i8)))
+            ||
+            set // decreasing
+                .iter()
+                .is_sorted_by(|x, y| (1..4).contains(&(**x as i8 - **y as i8)))
         }
 
-        // println!("{:?} i:{} d:{}",array, array.iter().is_sorted_by(|x, y| (1..4).contains(&(**y as i8 - **x as i8))),array.iter().is_sorted_by(|x, y| (1..4).contains(&(**x as i8 - **y as i8))));
 
-        println!("{:?}", self.0);
-        println!("Diff: {:?}", self.0.iter().zip(self.0.iter().skip(1)).map(|(a, b)| b.abs_diff(*a)).collect::<Vec<_>>());
+        // firstly the step and order must be valid.
+        let valid = valid_step_and_order(&self.0);
 
-        self.0 // increasing
-            .iter()
-            .is_sorted_by(|x, y| (1..4).contains(&(**y as i8 - **x as i8)))
-        ||
-        self.0 // decreasing
-            .iter()
-            .is_sorted_by(|x, y| (1..4).contains(&(**x as i8 - **y as i8)))
-    }
-
-
-    fn is_valid(&self) -> bool {
-        // firstly the step must be valid.
-        let step = self.valid_step();
-        if !step {
-            for mutation in bruteforce_mutations(&self.0) {
-                if mutation.valid_step() {
-                    println!("fixed {:?} to {:?}",&self.0, mutation);
-                    return true
-                }
-            }
+        if !valid { // invalid in the first place. maybe we can mutate the report to make it a valid report.
+            let valid_mutations: Vec<bool> = bruteforce_mutations(&self.0).iter().map(|x|valid_step_and_order(&x.0)).filter(|x| *x).collect(); // map each mutation to true/false, filter out false.
+            return valid_mutations.len() > 0 // when there is at least 1 valid mutation, it means that the report can be fixed with an modification. So we return true.
         };
-        step
+        valid
     }
 }
 
-
-
 // at this point just bruteforce it :crying:
 fn bruteforce_mutations(array: &Vec<u8>) -> Vec<Report> {
-    let mut result: Vec<Report> = array.iter().enumerate().map(|(i, _)| {
+    let result: Vec<Report> = array.iter().enumerate().map(|(i, _)| {
         let mut new_list = array.clone();
         new_list.remove(i);
         Report(new_list)
     }).collect();
 
-    println!("{:?}", result);
     result
 }
 
@@ -91,12 +79,18 @@ mod tests {
         let reports: Vec<Report> = input.lines().map(Report::from).collect();
 
 
-        assert_eq!(true, reports[0].is_valid());
-        assert_eq!(false, reports[1].is_valid());
-        assert_eq!(false, reports[2].is_valid());
-        assert_eq!(true, reports[3].is_valid()); // after correction
-        assert_eq!(true, reports[4].is_valid()); // after correction
-        assert_eq!(true, reports[5].is_valid());
+        assert_eq!(true, reports[0].valid());
+        assert_eq!(false, reports[1].valid());
+        assert_eq!(false, reports[2].valid());
+        assert_eq!(true, reports[3].valid()); // after correction
+        assert_eq!(true, reports[4].valid()); // after correction
+        assert_eq!(true, reports[5].valid());
+    }
 
+    #[test]
+    fn test_input() {
+        let input = include_str!("../../input.txt");
+
+        assert_eq!(665, solve_input(input));
     }
 }
