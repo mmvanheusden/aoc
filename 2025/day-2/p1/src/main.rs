@@ -5,15 +5,20 @@ fn main() {
     println!("{}", solve_input(input));
 }
 
-fn solve_input(input: &str) -> &str {
+fn solve_input(input: &str) -> String {
+    let mut invalid_ids = 0;
     let mut ranges = input_to_ranges(input);
     // dbg!(ranges);
     ranges.iter_mut().for_each(|range| {
         for id in range.into_iter() {
             // dbg!(id);
+            if id % 11 == 0 && id <= 99 {
+                println!("{id} is invalid!");
+                invalid_ids += 1;
+            }
         }
     });
-    return "a"
+    return format!("Invalide IDs: {invalid_ids}")
 }
 
 fn input_to_ranges(input: &str) -> Vec<RangeInclusive<u64>> {
