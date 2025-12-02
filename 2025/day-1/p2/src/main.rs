@@ -2,6 +2,11 @@ fn main() {
     let input = include_str!("../input.txt");
     println!("{}", solve_input(input));
 }
+// 5182 -> te laag
+// 7613 -> te hoog
+// 6115 -> te laag
+// 6389 -> nee
+// 6246 -> nee
 
 fn solve_input(input: &str) -> String {
     let mut DIAL = 50;
@@ -14,6 +19,16 @@ fn solve_input(input: &str) -> String {
             Rotation::Left(x) => {
                 let clicks = x % 100; // Hiermee zorgen we dat we nooit meer dan 1 rondje draaien.
                 let rounds = x / 100; // Hoeveel rondjes we draaien met de beweging.
+                if (DIAL - x) < 0 && DIAL != 0 {
+                    if rounds > 0 {
+                        println!("TZ! {}", rounds);
+                        touches_zero += rounds;
+                    } else {
+                        println!("TZ! 1");
+                        touches_zero += 1;
+                    }
+                }
+                
                 if clicks > DIAL {
                     DIAL += 100 - clicks;
                 } else {
@@ -23,14 +38,29 @@ fn solve_input(input: &str) -> String {
             Rotation::Right(x) => {
                 let clicks = x % 100;
                 let rounds = x / 100;
+                
+                dbg!(rounds);
+                if (DIAL+x) > 99 {
+                    if rounds > 0 {
+                        println!("TZ! {}", rounds);
+                        touches_zero += rounds;
+                    } else {
+                        println!("TZ! 1");
+                        touches_zero += 1;
+                    }
+                }
+
+                
                 DIAL += clicks;
                 if DIAL >= 100 {
+                    // We zijn overflowed!
                     DIAL -= 100;
                 }
             }
         };
         if DIAL == 0 {
             hit_zero += 1;
+            println!("HZ!")
         };
         println!("DIAL after: {DIAL}");
     });
