@@ -6,16 +6,22 @@ fn main() {
 }
 
 fn solve_input(input: &str) -> &str {
-    dbg!(input_to_ranges(input));
+    let mut ranges = input_to_ranges(input);
+    // dbg!(ranges);
+    ranges.iter_mut().for_each(|range| {
+        for id in range.into_iter() {
+            // dbg!(id);
+        }
+    });
     return "a"
 }
 
-fn input_to_ranges(input: &str) -> Vec<RangeInclusive<i64>> {
-    let mut ranges: Vec<RangeInclusive<i64>> = vec![];
+fn input_to_ranges(input: &str) -> Vec<RangeInclusive<u64>> {
+    let mut ranges: Vec<RangeInclusive<u64>> = vec![];
     let blocks: Vec<&str> = input.split(',').collect();
     blocks.iter().for_each(|block| {
         let split = block.split('-').collect::<Vec<&str>>();
-        ranges.push(RangeInclusive::new(split[0].parse::<i64>().unwrap(), split[1].parse::<i64>().unwrap()));
+        ranges.push(RangeInclusive::new(split[0].parse::<u64>().unwrap(), split[1].parse::<u64>().unwrap()));
     });
     return ranges
 }
