@@ -7,28 +7,24 @@ fn main() {
 // 6115 -> te laag
 // 6389 -> nee
 // 6246 -> nee
+// 4444 -> nee <- Bleek foutief te zijn, had moeten zijn 5478
+// 4896 -> nee <- Bleek foutief te zijn, had moeten zijn 5930
 
 fn solve_input(input: &str) -> String {
     let mut DIAL = 50;
-    let mut hit_zero = 0;
-    let mut touches_zero = 0;
+    let mut ends_at_zero = 0;
+    let mut hits_zero = 0;
     let rotations = parse_to_rotations(input);
     rotations.iter().for_each(|rotation| {
         println!("\nDIAL before: {DIAL}\tI: {:?}", rotation);
         match rotation {
             Rotation::Left(x) => {
                 let clicks = x % 100; // Hiermee zorgen we dat we nooit meer dan 1 rondje draaien.
-                let rounds = x / 100; // Hoeveel rondjes we draaien met de beweging.
-                if (DIAL - x) < 0 && DIAL != 0 {
-                    if rounds > 0 {
-                        println!("TZ! {}", rounds);
-                        touches_zero += rounds;
-                    } else {
-                        println!("TZ! 1");
-                        touches_zero += 1;
-                    }
+                if DIAL - x < 0 && DIAL != 0 {
+                    let amount = div_up(x, 100 as usize);
+                    println!("We gaan {amount}x over 0 heen naar links.");
+                    hits_zero += amount;
                 }
-                
                 if clicks > DIAL {
                     DIAL += 100 - clicks;
                 } else {
@@ -37,34 +33,26 @@ fn solve_input(input: &str) -> String {
             },
             Rotation::Right(x) => {
                 let clicks = x % 100;
-                let rounds = x / 100;
-                
-                dbg!(rounds);
-                if (DIAL+x) > 99 {
-                    if rounds > 0 {
-                        println!("TZ! {}", rounds);
-                        touches_zero += rounds;
-                    } else {
-                        println!("TZ! 1");
-                        touches_zero += 1;
-                    }
-                }
-
-                
+                let dial_before = DIAL;
                 DIAL += clicks;
                 if DIAL >= 100 {
-                    // We zijn overflowed!
                     DIAL -= 100;
+                }
+                if dial_before + x >= 100 && dial_before != 0 {
+                    let amount = div_up(x, 100 as usize);
+                    println!("We gaan {amount}x over 0 heen naar rechts.");
+
+                    hits_zero += amount;
                 }
             }
         };
         if DIAL == 0 {
-            hit_zero += 1;
-            println!("HZ!")
+            ends_at_zero += 1;
+            println!("Eindigd op 0!")
         };
         println!("DIAL after: {DIAL}");
     });
-    return format!("HZ: {hit_zero} TZ: {touches_zero} ANS: {}", hit_zero+touches_zero)
+    return format!("EZ: {ends_at_zero}, HZ: {hits_zero}, sum: {}", ends_at_zero+hits_zero)
 }
 
 fn parse_to_rotations(input: &str) -> Vec<Rotation> {
@@ -81,6 +69,12 @@ fn parse_to_rotations(input: &str) -> Vec<Rotation> {
         });
     }
     return rotations
+}
+
+/// Source: https://www.reddit.com/r/rust/comments/bk7v15/my_next_favourite_way_to_divide_integers_rounding/
+pub fn div_up(a: &i32, b: usize) -> usize {
+    // We *know* that the hint is exact, this is thus precisely the amount of chunks of length `b` each
+    (0..*a).step_by(b).size_hint().0
 }
 
 #[derive(Debug)]
